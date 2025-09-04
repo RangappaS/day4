@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Difficult IBPS Quiz</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .quiz-container { background: #fff; padding: 20px; border-radius: 12px; width: 700px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    h2 { margin-bottom: 15px; }
+    .options label { display: block; padding: 8px; margin: 6px 0; background: #f1f1f1; border-radius: 8px; cursor: pointer; }
+    .options input { margin-right: 10px; }
+    #timer { font-weight: bold; color: red; margin-bottom: 15px; }
+    #nextBtn, #restartBtn, #reviewBtn { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 8px; background: #007bff; color: white; cursor: pointer; }
+    #nextBtn:hover, #restartBtn:hover, #reviewBtn:hover { background: #0056b3; }
+    #result, #review { display: none; text-align: center; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    th { background: #007bff; color: white; }
+    .correct { color: green; font-weight: bold; }
+    .wrong { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <div id="quiz">
+      <h2 id="question">Loading...</h2>
+      <div id="timer">Time Left: 45s</div>
+      <div class="options" id="options"></div>
+      <button id="nextBtn" onclick="nextQuestion()">Next</button>
+    </div>
+    <div id="result">
+      <h2>Quiz Completed</h2>
+      <p id="score"></p>
+      <p id="status"></p>
+      <button id="reviewBtn" onclick="showReview()">Review Answers</button>
+      <button id="restartBtn" onclick="restartQuiz()">Restart</button>
+    </div>
+    <div id="review">
+      <h2>Answer Review</h2>
+      <table>
+        <thead>
+          <tr><th>Q.No</th><th>Question</th><th>Your Answer</th><th>Correct Answer</th><th>Result</th></tr>
+        </thead>
+        <tbody id="reviewTable"></tbody>
+      </table>
+      <button id="restartBtn" onclick="restartQuiz()">Restart</button>
+    </div>
+  </div>
+
+<script>
+const quizData = [
+  // Simplification
+  { q: "√5776 ÷ 28 + 15 = ?", options: ["34","35","36","37"], answer: "36" },
+  { q: "(45% of 640) – (25% of 320) = ?", options: ["128","144","152","160"], answer: "144" },
+  { q: "(54 × 54) – (46 × 46) = ?", options: ["720","760","800","840"], answer: "800" },
+  { q: "(1440 ÷ 24 × 5) ÷ 12 = ?", options: ["20","25","30","35"], answer: "25" },
+  { q: "(18² + 22²) – (16² + 20²) = ?", options: ["72","76","80","84"], answer: "80" },
+
+  // Time & Work
+  { q: "A(10d), B(15d), C(20d) work 2 days together. Work left = ?", options: ["1/2","7/15","3/5","2/5"], answer: "7/15" },
+  { q: "16 men → 18d, 24 men → ?", options: ["10","11","12","13"], answer: "12" },
+  { q: "A(12d), B(18d), 4 days together then A leaves. B alone will take?", options: ["6","7","8","9"], answer: "7" },
+  { q: "A(30d), B(40d), C(60d). A leaves after 5d, B after 7d. C alone needs?", options: ["12","14","16","18"], answer: "16" },
+  { q: "12 men → 36d. After 12d, 4 leave. Remaining work completed in?", options: ["30","32","34","36"], answer: "32" },
+
+  // Profit & Loss
+  { q: "SP gives 20% profit. If CP ↓20% and SP ↑60, profit=50%. CP=?", options: ["200","240","250","300"], answer: "200" },
+  { q: "Profit=25%. If sold ₹60 less, loss=10%. CP=?", options: ["150","200","240","250"], answer: "200" },
+  { q: "SP=₹480, Loss=20%. Find SP for 25% gain.", options: ["650","700","720","750"], answer: "720" },
+  { q: "Profit=25%. If CP↓20% & SP↑₹10, Profit=50%. CP=?", options: ["40","50","60","80"], answer: "40" },
+  { q: "Two articles sold ₹480 each. One +20%, other -20%. Overall loss%?", options: ["2","4","5","6"], answer: "4" },
+
+  // Number Series
+  { q: "7, 15, 31, 63, 127, ?", options: ["255","257","261","263"], answer: "255" },
+  { q: "2, 9, 28, 65, 126, ?", options: ["217","218","219","220"], answer: "217" },
+  { q: "3, 12, 36, 108, ?", options: ["216","324","432","648"], answer: "324" },
+  { q: "11, 23, 47, 95, 191, ?", options: ["381","383","385","387"], answer: "383" },
+  { q: "13, 17, 25, 41, 69, ?", options: ["97","105","109","113"], answer: "113" }
+];
+
+let currentQ = 0, score = 0, timer, timeLeft = 45;
+let userAnswers = [];
+
+function loadQuestion() {
+  clearInterval(timer);
+  timeLeft = 45;
+  document.getElementById("timer").innerText = "Time Left: " + timeLeft + "s";
+  timer = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timer").innerText = "Time Left: " + timeLeft + "s";
+    if (timeLeft <= 0) { nextQuestion(); }
+  }, 1000);
+
+  let qData = quizData[currentQ];
+  document.getElementById("question").innerText = (currentQ+1) + ". " + qData.q;
+  let optsHTML = "";
+  qData.options.forEach(opt => {
+    optsHTML += `<label><input type="radio" name="option" value="${opt}"> ${opt}</label>`;
+  });
+  document.getElementById("options").innerHTML = optsHTML;
+}
+
+function nextQuestion() {
+  let selected = document.querySelector('input[name="option"]:checked');
+  let userAns = selected ? selected.value : "Not Attempted";
+  userAnswers.push({ q: quizData[currentQ].q, user: userAns, correct: quizData[currentQ].answer });
+  if (userAns === quizData[currentQ].answer) score++;
+
+  currentQ++;
+  if (currentQ < quizData.length) {
+    loadQuestion();
+  } else {
+    endQuiz();
+  }
+}
+
+function endQuiz() {
+  clearInterval(timer);
+  document.getElementById("quiz").style.display = "none";
+  document.getElementById("result").style.display = "block";
+  document.getElementById("score").innerText = "Your Score: " + score + " / " + quizData.length;
+  document.getElementById("status").innerText = (score >= 20) ? "✅ Selected" : "❌ Not Selected";
+}
+
+function showReview() {
+  document.getElementById("result").style.display = "none";
+  document.getElementById("review").style.display = "block";
+  let tableHTML = "";
+  userAnswers.forEach((ans, idx) => {
+    let result = ans.user === ans.correct ? `<span class='correct'>Correct</span>` : `<span class='wrong'>Wrong</span>`;
+    tableHTML += `<tr>
+      <td>${idx+1}</td>
+      <td>${ans.q}</td>
+      <td>${ans.user}</td>
+      <td>${ans.correct}</td>
+      <td>${result}</td>
+    </tr>`;
+  });
+  document.getElementById("reviewTable").innerHTML = tableHTML;
+}
+
+function restartQuiz() {
+  currentQ = 0; score = 0; userAnswers = [];
+  document.getElementById("review").style.display = "none";
+  document.getElementById("result").style.display = "none";
+  document.getElementById("quiz").style.display = "block";
+  loadQuestion();
+}
+
+loadQuestion();
+</script>
+</body>
+</html>

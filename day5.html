@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IBPS Quant Quiz — Corrected</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      width: 95%;
+      max-width: 700px;
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    h2 { font-size: 18px; margin: 8px 0; }
+    .section {
+      font-weight: bold;
+      color: #2c3e50;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #eee;
+      font-size: 16px;
+      transition: 0.2s;
+    }
+    .options button:hover { background: #ddd; }
+    .selected { background: #f9e79f !important; }
+    .correct { background: #82e0aa !important; color: black; }
+    .wrong { background: #f1948a !important; color: black; }
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .controls button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #3498db;
+      color: white;
+      font-size: 14px;
+    }
+    .solution {
+      margin-top: 10px;
+      padding: 10px;
+      border-left: 4px solid #3498db;
+      background: #ecf0f1;
+      font-size: 14px;
+    }
+    .score {
+      font-size: 20px;
+      text-align: center;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+    #timer {
+      position: absolute;
+      top: -40px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20px;
+      font-weight: bold;
+      color: #e74c3c;
+      background: white;
+      padding: 5px 15px;
+      border-radius: 8px;
+      box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+      display: none;
+    }
+    #intro, #resultPage { text-align: center; font-size: 18px; }
+    #intro button, #resultPage button {
+      margin-top: 20px; padding: 12px 20px; font-size: 16px;
+      border: none; border-radius: 10px; cursor: pointer; background: #27ae60; color: white;
+    }
+    #resultPage h2 { color: teal; }
+    .scoreCard {
+      text-align: left; margin-top: 20px; padding: 15px;
+      background: #f8f9fa; border-radius: 10px; font-size: 16px;
+    }
+    .scoreCard p { margin: 8px 0; padding: 5px; }
+    @media(max-width:480px){
+      .controls { flex-direction: column; }
+      .controls button { width:100%; margin:6px 0; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div id="timer">12:00</div>
+
+  <!-- Intro Page -->
+  <div id="intro">
+    <h1 style="color: teal;">IBPS Quant Practice Quiz</h1>
+    <p>📌 You have <b>12 minutes</b> to complete 20 questions.<br>
+       📌 Each correct answer = 1 mark.<br>
+       📌 If you score <b>14 or more</b> → ✅ Selected.<br>
+       📌 If you score less than 14 → ❌ Not Selected.<br><br>
+       <b>All the best!</b>
+    </p>
+    <button onclick="startQuiz()">Start Quiz</button>
+  </div>
+
+  <!-- Quiz Area -->
+  <div id="quizArea" style="display:none;">
+    <div class="section" id="sectionTitle"></div>
+    <h2 id="question"></h2>
+    <div class="options" id="options"></div>
+    <div class="solution" id="solution"></div>
+    <div class="controls">
+      <button onclick="prevQuestion()">Previous</button>
+      <button onclick="nextQuestion()">Next</button>
+    </div>
+  </div>
+
+  <!-- Result Page -->
+  <div id="resultPage" style="display:none;">
+    <h2>Quiz Completed ✅</h2>
+    <p id="finalScore"></p>
+    <p id="status"></p>
+    <div class="scoreCard" id="sectionScores"></div>
+    <button onclick="restartQuiz()">Restart Quiz</button>
+  </div>
+</div>
+
+<script>
+/* Corrected quiz data: answers and solutions fixed */
+const quizData = [
+  // Simplification (5)
+  {section:"Simplification", q:"48 ÷ 12 × 5 + 15 = ?", options:["25","30","35","20"], answer:2, solution:"48 ÷ 12 = 4; 4 × 5 = 20; 20 + 15 = 35."},
+  {section:"Simplification", q:"15% of 240 + 25% of 160 = ?", options:["76","84","88","92"], answer:0, solution:"15% of 240 = 36; 25% of 160 = 40; total = 36 + 40 = 76."},
+  {section:"Simplification", q:"(72 ÷ 9) + (144 ÷ 12) × 3 = ?", options:["42","44","46","48"], answer:1, solution:"72 ÷ 9 = 8; 144 ÷ 12 = 12; 12 × 3 = 36; 8 + 36 = 44."},
+  {section:"Simplification", q:"18² – 12² = ?", options:["180","216","108","132"], answer:0, solution:"18² = 324; 12² = 144; difference = 324 − 144 = 180."},
+  {section:"Simplification", q:"(250 ÷ 5) + (0.5 × 80) = ?", options:["90","100","110","120"], answer:0, solution:"250 ÷ 5 = 50; 0.5 × 80 = 40; total = 50 + 40 = 90."},
+
+  // Time & Work (5)
+  {section:"Time & Work", q:"A can do a job in 12 days, B in 18 days. Together they finish in:", options:["6","7.2","8","9"], answer:1, solution:"Rate = 1/12 + 1/18 = (3+2)/36 = 5/36 ⇒ days = 36/5 = 7.2 days."},
+  {section:"Time & Work", q:"A + B finish in 10 days. A alone takes 15 days. B alone takes:", options:["25","20","30","40"], answer:2, solution:"A rate = 1/15; combined = 1/10 ⇒ B rate = 1/10 − 1/15 = 1/30 ⇒ B = 30 days."},
+  {section:"Time & Work", q:"10 men do a job in 12 days. How many men needed to finish in 8 days?", options:["12","14","15","16"], answer:2, solution:"Work = 10×12 = 120 man-days. For 8 days → 120/8 = 15 men."},
+  {section:"Time & Work", q:"A does job in 8 days, B in 10 days. With C they finish in 4 days. C alone takes:", options:["20","25","30","40"], answer:3, solution:"A=1/8, B=1/10 ⇒ A+B = 9/40. Total = 1/4 = 10/40. So C = 10/40 − 9/40 = 1/40 ⇒ 40 days."},
+  {section:"Time & Work", q:"15 workers build a wall in 24 days. 10 workers will take:", options:["30","34","36","40"], answer:2, solution:"Work = 15×24 = 360 man-days. 10 workers → 360/10 = 36 days."},
+
+  // Profit & Loss (5)
+  {section:"Profit & Loss", q:"CP = ₹500, Profit = 20%. SP = ?", options:["580","600","620","550"], answer:1, solution:"SP = 500 × 1.20 = ₹600."},
+  {section:"Profit & Loss", q:"Bought for ₹240, sold at ₹288. Profit % = ?", options:["15%","18%","20%","25%"], answer:2, solution:"Profit = 288 − 240 = 48; % = (48/240)×100 = 20%."},
+  {section:"Profit & Loss", q:"An article sold at 10% loss. If sold for ₹540 more it gives 5% profit. CP = ?", options:["3200","3400","3600","3000"], answer:2, solution:"Increase from −10% to +5% = 15% of CP = 540 ⇒ CP = 540/0.15 = ₹3600."},
+  {section:"Profit & Loss", q:"SP = ₹550 with 10% profit. CP = ?", options:["500","510","520","530"], answer:0, solution:"If SP = 550 = 110% of CP ⇒ CP = 550/1.10 = ₹500."},
+  {section:"Profit & Loss", q:"SP = ₹720, Loss = 20%. CP = ?", options:["850","880","900","960"], answer:2, solution:"720 = 80% of CP ⇒ CP = 720/0.8 = ₹900."},
+
+  // Number Series (5)
+  {section:"Number Series", q:"3, 6, 12, 24, ? →", options:["36","42","46","48"], answer:3, solution:"Each term ×2 → 24×2 = 48."},
+  {section:"Number Series", q:"5, 15, 45, 135, ? →", options:["270","405","450","500"], answer:1, solution:"Each term ×3 → 135×3 = 405."},
+  {section:"Number Series", q:"2, 5, 10, 17, 26, ? →", options:["35","36","37","38"], answer:2, solution:"Differences +3,+5,+7,+9,+11 → next = 26 + 11 = 37."},
+  {section:"Number Series", q:"121, 144, 169, 196, ? →", options:["215","220","225","230"], answer:2, solution:"These are squares: 11²,12²,13²,14² ⇒ next 15² = 225."},
+  {section:"Number Series", q:"4, 9, 19, 39, 79, ? →", options:["159","169","179","189"], answer:0, solution:"Pattern ×2 + 1 each step → 79×2 + 1 = 159."}
+];
+
+let current = 0;
+let score = 0;
+let answered = Array(quizData.length).fill(false);
+let sectionScores = {};
+let time = 12 * 60; // 12 minutes in seconds
+let timerInterval;
+
+function startQuiz() {
+  document.getElementById("intro").style.display = "none";
+  document.getElementById("quizArea").style.display = "block";
+  document.getElementById("timer").style.display = "block";
+  score = 0;
+  current = 0;
+  time = 12 * 60;
+  answered.fill(false);
+  sectionScores = {};
+  startTimer();
+  loadQuestion();
+}
+
+function loadQuestion() {
+  let q = quizData[current];
+  document.getElementById("sectionTitle").innerText = `Section: ${q.section}`;
+  document.getElementById("question").innerText = `Q${current+1}. ${q.q}`;
+  let optionsHTML = "";
+  q.options.forEach((opt,i) => {
+    optionsHTML += `<button onclick="checkAnswer(${i}, this)">${opt}</button>`;
+  });
+  document.getElementById("options").innerHTML = optionsHTML;
+  document.getElementById("solution").innerHTML = "";
+}
+
+function checkAnswer(selected, btn) {
+  if (answered[current]) return;
+  answered[current] = true;
+  let buttons = document.querySelectorAll("#options button");
+  let q = quizData[current];
+
+  // Visually mark the selected briefly
+  buttons[selected].classList.add("selected");
+
+  setTimeout(() => {
+    // Remove the temporary selected marker
+    buttons[selected].classList.remove("selected");
+
+    if (selected === q.answer) {
+      buttons[selected].classList.add("correct");
+      score++;
+      sectionScores[q.section] = (sectionScores[q.section] || 0) + 1;
+    } else {
+      buttons[selected].classList.add("wrong");
+      buttons[q.answer].classList.add("correct");
+    }
+
+    document.getElementById("solution").innerHTML = "💡 " + q.solution;
+
+    // If last question, show total score
+    if (current === quizData.length - 1) {
+      document.getElementById("score").innerText = `✅ Final Score: ${score} / ${quizData.length}`;
+    }
+  }, 250);
+}
+
+function nextQuestion() {
+  if (current < quizData.length - 1) {
+    current++;
+    loadQuestion();
+  } else {
+    showResult();
+  }
+}
+function prevQuestion() {
+  if (current > 0) {
+    current--;
+    loadQuestion();
+  }
+}
+
+function startTimer() {
+  let t = document.getElementById("timer");
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    let minutes = Math.floor(time / 60);
+    let seconds = time % 60;
+    t.textContent = `${minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
+    if (time <= 0) {
+      clearInterval(timerInterval);
+      showResult();
+    }
+    time--;
+  }, 1000);
+}
+
+function showResult() {
+  clearInterval(timerInterval);
+  document.getElementById("quizArea").style.display = "none";
+  document.getElementById("timer").style.display = "none";
+  document.getElementById("resultPage").style.display = "block";
+
+  document.getElementById("finalScore").innerText = `Your Total Score: ${score} / ${quizData.length}`;
+  document.getElementById("status").innerText = score >= 14 ? "🎉 Congratulations! You are Selected." : "❌ Sorry, You are Not Selected.";
+
+  let secHTML = "<h3>Section-wise Performance</h3>";
+  let secs = ["Simplification","Time & Work","Profit & Loss","Number Series"];
+  secs.forEach(sec => {
+    let got = sectionScores[sec] || 0;
+    secHTML += `<p>📌 ${sec}: <b>${got} / 5</b></p>`;
+  });
+  document.getElementById("sectionScores").innerHTML = secHTML;
+}
+
+function restartQuiz() {
+  document.getElementById("resultPage").style.display = "none";
+  document.getElementById("intro").style.display = "block";
+}
+</script>
+</body>
+</html>
